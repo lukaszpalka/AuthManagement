@@ -1,0 +1,34 @@
+package com.example.authmanagement.enums;
+
+import com.example.authmanagement.exceptions.NoAccessException;
+import com.example.authmanagement.user.UserDto;
+import lombok.Getter;
+
+import java.util.*;
+
+@Getter
+public enum Role {
+    SUPER_ADMIN(new EnumMap<>(Operation.class) {{
+        put(Operation.DELETE, List.of(Resource.USER, Resource.ADMIN, Resource.SUPER_ADMIN));
+        put(Operation.ACTIVATE, List.of(Resource.USER, Resource.ADMIN, Resource.SUPER_ADMIN));
+    }}),
+    ADMIN(new EnumMap<>(Operation.class) {{
+        put(Operation.ADD, List.of(Resource.CATEGORY, Resource.PRODUCT));
+        put(Operation.MODIFY, List.of(Resource.CATEGORY, Resource.PRODUCT));
+        put(Operation.DELETE, List.of(Resource.CATEGORY, Resource.PRODUCT));
+    }}),
+    USER(new EnumMap<>(Operation.class) {{
+        put(Operation.GET, List.of(Resource.PRODUCT));
+    }});
+
+    private final Map<Operation, List<Resource>> permissions;
+
+    Role(final Map<Operation, List<Resource>> permissions) {
+        this.permissions = permissions;
+    }
+
+    public boolean hasAccessTo(Operation operation, Resource resource) {
+        return permissions.getOrDefault(operation, Collections.emptyList()).stream()
+                .anyMatch(resource1 -> resource1.equals(resource));
+    }
+}
