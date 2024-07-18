@@ -1,17 +1,15 @@
 package com.example.authmanagement.user;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.authmanagement.auth.AuthService;
-import com.example.authmanagement.enums.Operation;
-import com.example.authmanagement.enums.Resource;
 import com.example.authmanagement.enums.Role;
 import com.example.authmanagement.exceptions.*;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,9 +41,9 @@ public class UserService {
                 user.isActive(),
                 user.getRoles(),
                 user.getToken(),
-                user.getTokenExpirationDate());
-//                user.getRefreshToken(),
-//                user.getRefreshTokenExpirationDate());
+                user.getTokenExpirationDate(),
+                user.getRefreshToken(),
+                user.getRefreshTokenExpirationDate());
     }
 
     public UserDto getUserDtoByUsername(String username) {
@@ -80,6 +78,27 @@ public class UserService {
         userRepository.save(user);
     }
 
+//    @Transactional
+//    public String signIn(UserDto userDto) {
+//        if (userDto.username().isBlank() || userDto.password().isBlank()) {
+//            throw new EmptyDataException("Data can't be empty");
+//        }
+//        UserDto encodedUserDto = getUserDtoByUsername(userDto.username());
+//        if (authService.checkPassword(userDto, encodedUserDto) && isActive(encodedUserDto)) {
+//            User user = getUserByUsername(userDto.username());
+//            String accessToken = authService.generateJwtToken(encodedUserDto);
+//            user.setToken(accessToken);
+//            user.setTokenExpirationDate(authService.getTokenExpirationDate(accessToken));
+//            userRepository.save(user);
+//            return accessToken;
+//        } else {
+//            throw new BadCredentialsException("Wrong username or password");
+//        }
+//    }
+
+
+//    -------------------------------- with refresh token ----------------------------------
+
     @Transactional
     public String signIn(UserDto userDto) {
         if (userDto.username().isBlank() || userDto.password().isBlank()) {
@@ -89,53 +108,41 @@ public class UserService {
         if (authService.checkPassword(userDto, encodedUserDto) && isActive(encodedUserDto)) {
             User user = getUserByUsername(userDto.username());
             String accessToken = authService.generateJwtToken(encodedUserDto);
-//            String refreshToken = authService.generateRefreshToken(encodedUserDto);
+            String refreshToken = authService.generateRefreshToken(encodedUserDto);
             user.setToken(accessToken);
             user.setTokenExpirationDate(authService.getTokenExpirationDate(accessToken));
-//            user.setRefreshToken(refreshToken);
-//            user.setRefreshTokenExpirationDate(authService.getRefreshTokenExpirationDate(refreshToken));
+            user.setRefreshToken(refreshToken);
+            user.setRefreshTokenExpirationDate(authService.getRefreshTokenExpirationDate(refreshToken));
             userRepository.save(user);
             return accessToken;
         } else {
             throw new BadCredentialsException("Wrong username or password");
         }
     }
-//
-//    @Transactional
-//    public void signIn(UserDto userDto) {
-//        if (userDto.username().isBlank() || userDto.password().isBlank()) {
-//            throw new EmptyDataException("Data can't be empty");
-//        }
-//        UserDto encodedUserDto = getUserDtoByUsername(userDto.username());
-//        if (authService.checkPassword(userDto, encodedUserDto) && isActive(encodedUserDto)) {
-//            User user = getUserByUsername(userDto.username());
-//            String accessToken = authService.generateJwtToken(encodedUserDto);
-////            String refreshToken = authService.generateRefreshToken(encodedUserDto);
-//            user.setToken(accessToken);
-//            user.setTokenExpirationDate(authService.getTokenExpirationDate(accessToken));
-////            user.setRefreshToken(refreshToken);
-////            user.setRefreshTokenExpirationDate(authService.getRefreshTokenExpirationDate(refreshToken));
-//            userRepository.save(user);
-//        } else {
-//            throw new BadCredentialsException("Wrong username or password");
-//        }
-//    }
 
-//    @Transactional
-//    public String refreshAccessToken(String refreshToken) {
-//        DecodedJWT decodedJWT = authService.verifyToken(refreshToken);
-//        User user = getUserByUsername(decodedJWT.getSubject());
-//
-//        if (user.getRefreshToken().equals(refreshToken) && user.getRefreshTokenExpirationDate().isAfter(LocalDateTime.now())) {
-//            String newAccessToken = authService.generateJwtToken(convertUserToUserDto(user));
-//            user.setToken(newAccessToken);
-//            user.setTokenExpirationDate(authService.getTokenExpirationDate(newAccessToken));
-//            userRepository.save(user);
-//            return newAccessToken;
-//        } else {
-//            throw new IllegalArgumentException("Invalid refresh token");
-//        }
-//    }
+    @Transactional
+    public String refreshAccessToken(String refreshBearerToken) {
+        if (!refreshBearerToken.startsWith("Bearer ")) {
+            throw new WrongRefreshTokenException("Bearer token not provided");
+        }
+
+        String refreshToken = refreshBearerToken.replace("Bearer ", "");
+
+        DecodedJWT decodedJWT = authService.verifyToken(refreshToken);
+        User user = getUserByUsername(decodedJWT.getSubject());
+
+        if (!user.getRefreshToken().equals(refreshToken)) {
+            throw new WrongRefreshTokenException("Refresh token doesn't match");
+        } else if (user.getRefreshTokenExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new RefreshTokenExpiredException("Refresh token expired");
+        } else {
+            String newAccessToken = authService.generateJwtToken(convertUserToUserDto(user));
+            user.setToken(newAccessToken);
+            user.setTokenExpirationDate(authService.getTokenExpirationDate(newAccessToken));
+            userRepository.save(user);
+            return newAccessToken;
+        }
+    }
 
     @Transactional
     public void activateAccount(UserDto userDto) {
@@ -164,24 +171,6 @@ public class UserService {
 
     public void removeUser(Long id) {
         userRepository.deleteById(id);
-    }
-
-
-    public boolean hasAccessTo(Long id, Operation operation, Resource resource) {
-        for (Role role : getUserDtoById(id).roles()) {
-            if (role.hasAccessTo(operation, resource)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public UserDto getUserDtoById(Long id) {
-        return convertUserToUserDto(findById(id));
-    }
-
-    private User findById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id=" + id + " not found."));
     }
 
     private boolean isActive(UserDto userDto) {

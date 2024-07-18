@@ -26,11 +26,6 @@ public class User {
 
     private boolean isActive;
 
-//    @Enumerated(EnumType.STRING)
-//    @ElementCollection(targetClass = Role.class)
-//    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-//    private Set<Role> roles = new HashSet<>();
-
     @Enumerated(EnumType.STRING)
     @ElementCollection(targetClass = Role.class)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
@@ -42,8 +37,8 @@ public class User {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime tokenExpirationDate;
 
-//    String refreshToken;
-//
-//    @Temporal(TemporalType.TIMESTAMP)
-//    private LocalDateTime refreshTokenExpirationDate;
+    String refreshToken;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime refreshTokenExpirationDate;
 }

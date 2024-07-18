@@ -14,8 +14,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class AuthConfig {
 
-    @Autowired
-    AuthFilter authFilter;
+    private final AuthFilter authFilter;
+
+    public AuthConfig(final AuthFilter authFilter) {
+        this.authFilter = authFilter;
+    }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -26,13 +29,13 @@ public class AuthConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/user/all").permitAll()
                         .requestMatchers("/user/action").authenticated()
-                        .requestMatchers("/user/**").permitAll()
                         .anyRequest()
                         .authenticated())
-                .httpBasic(AbstractHttpConfigurer::disable)
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-                .csrf(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

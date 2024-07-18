@@ -37,15 +37,14 @@ public class JWTUtil {
                 .sign(algorithm);
     }
 
-//    TODO: obsługa refreshtokena
-//    public String createRefreshToken(UserDto userDto) {
-//        return JWT.create()
-//                .withSubject(userDto.username())
-//                .withClaim("id", userDto.id())
-//                .withIssuedAt(Date.from(Instant.now()))
-//                .withExpiresAt(Date.from(Instant.now().plusSeconds(2592000)))
-//                .sign(algorithm);
-//    }
+    public String createRefreshToken(UserDto userDto) {
+        return JWT.create()
+                .withSubject(userDto.username())
+                .withClaim("id", userDto.id())
+                .withIssuedAt(Date.from(Instant.now()))
+                .withExpiresAt(Date.from(Instant.now().plusSeconds(2592000)))
+                .sign(algorithm);
+    }
 
 
     public DecodedJWT verifyToken(String token) {

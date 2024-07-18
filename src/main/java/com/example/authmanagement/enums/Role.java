@@ -1,10 +1,11 @@
 package com.example.authmanagement.enums;
 
-import com.example.authmanagement.exceptions.NoAccessException;
-import com.example.authmanagement.user.UserDto;
 import lombok.Getter;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 public enum Role {
