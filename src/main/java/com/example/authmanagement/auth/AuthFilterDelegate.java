@@ -12,13 +12,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 public class AuthFilterDelegate {
@@ -33,27 +33,29 @@ public class AuthFilterDelegate {
 
     @Transactional
     public void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain) throws ServletException, IOException {
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            DecodedJWT decodedJWT = jwtUtil.verifyToken(token.replace("Bearer ", ""));
-
-            if (decodedJWT.getExpiresAt().before(Date.from(Instant.now()))) {
-                throw new SessionExpiredException("Session expired");
-            }
-
-            String myOperation = request.getParameter("operation");
-            String myResource = request.getParameter("resource");
-            Operation operation = Operation.valueOf(myOperation);
-            Resource resource = Resource.valueOf(myResource);
-
-            if (!hasAccessTo(Long.valueOf(decodedJWT.getClaim("id").toString()), operation, resource)) {
-                throw new NoAccessException("No access");
-            }
+        Optional<String> token = Optional.ofNullable(request.getHeader(HttpHeaders.AUTHORIZATION))
+                .map(authHeader -> authHeader.substring("Bearer ".length()));
+        if (token.isEmpty()) {
             filterChain.doFilter(request, response);
-        } else {
+            return;
+        }
+
+        DecodedJWT decodedJWT = jwtUtil.verifyToken(token.get());
+        if (decodedJWT.getExpiresAt().before(Date.from(Instant.now()))) {
+            throw new SessionExpiredException("Session expired");
+        }
+
+        String myOperation = request.getParameter("operation");
+        String myResource = request.getParameter("resource");
+        Operation operation = Operation.valueOf(myOperation);
+        Resource resource = Resource.valueOf(myResource);
+
+        if (!hasAccessTo(Long.valueOf(decodedJWT.getClaim("id").toString()), operation, resource)) {
             throw new NoAccessException("No access");
         }
+        filterChain.doFilter(request, response);
     }
+
 
     private boolean hasAccessTo(Long id, Operation operation, Resource resource) {
         return userRepository.findById(id)
