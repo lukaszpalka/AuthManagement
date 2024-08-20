@@ -10,8 +10,7 @@ import java.util.Map;
 @Getter
 public enum Role {
     SUPER_ADMIN(new EnumMap<>(Operation.class) {{
-        put(Operation.DELETE, List.of(Resource.USER, Resource.ADMIN, Resource.SUPER_ADMIN));
-        put(Operation.ACTIVATE, List.of(Resource.USER, Resource.ADMIN, Resource.SUPER_ADMIN));
+        put(Operation.DELETE, List.of(Resource.USER));
     }}),
     ADMIN(new EnumMap<>(Operation.class) {{
         put(Operation.ADD, List.of(Resource.CATEGORY, Resource.PRODUCT));
@@ -19,7 +18,7 @@ public enum Role {
         put(Operation.DELETE, List.of(Resource.CATEGORY, Resource.PRODUCT));
     }}),
     USER(new EnumMap<>(Operation.class) {{
-        put(Operation.GET, List.of(Resource.PRODUCT));
+        put(Operation.GET, List.of(Resource.PRODUCT, Resource.CATEGORY));
     }});
 
     private final Map<Operation, List<Resource>> permissions;

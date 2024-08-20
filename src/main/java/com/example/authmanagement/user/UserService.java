@@ -2,7 +2,7 @@ package com.example.authmanagement.user;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.authmanagement.auth.AuthService;
-import com.example.authmanagement.enums.Role;
+import com.example.authmanagement.auth.LoginResponseDto;
 import com.example.authmanagement.exceptions.*;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -78,34 +77,16 @@ public class UserService {
         userRepository.save(user);
     }
 
-//    @Transactional
-//    public String signIn(UserDto userDto) {
-//        if (userDto.username().isBlank() || userDto.password().isBlank()) {
-//            throw new EmptyDataException("Data can't be empty");
-//        }
-//        UserDto encodedUserDto = getUserDtoByUsername(userDto.username());
-//        if (authService.checkPassword(userDto, encodedUserDto) && isActive(encodedUserDto)) {
-//            User user = getUserByUsername(userDto.username());
-//            String accessToken = authService.generateJwtToken(encodedUserDto);
-//            user.setToken(accessToken);
-//            user.setTokenExpirationDate(authService.getTokenExpirationDate(accessToken));
-//            userRepository.save(user);
-//            return accessToken;
-//        } else {
-//            throw new BadCredentialsException("Wrong username or password");
-//        }
-//    }
-
-
-//    -------------------------------- with refresh token ----------------------------------
-
     @Transactional
-    public String signIn(UserDto userDto) {
+    public LoginResponseDto signIn(UserDto userDto) {
         if (userDto.username().isBlank() || userDto.password().isBlank()) {
             throw new EmptyDataException("Data can't be empty");
         }
         UserDto encodedUserDto = getUserDtoByUsername(userDto.username());
-        if (authService.checkPassword(userDto, encodedUserDto) && isActive(encodedUserDto)) {
+        if (!encodedUserDto.isActive()) {
+            throw new InactiveUserException("Account inactive");
+        }
+        if (authService.checkPassword(userDto, encodedUserDto)) {
             User user = getUserByUsername(userDto.username());
             String accessToken = authService.generateJwtToken(encodedUserDto);
             String refreshToken = authService.generateRefreshToken(encodedUserDto);
@@ -114,20 +95,14 @@ public class UserService {
             user.setRefreshToken(refreshToken);
             user.setRefreshTokenExpirationDate(authService.getRefreshTokenExpirationDate(refreshToken));
             userRepository.save(user);
-            return accessToken;
+            return new LoginResponseDto(accessToken, refreshToken);
         } else {
             throw new BadCredentialsException("Wrong username or password");
         }
     }
 
     @Transactional
-    public String refreshAccessToken(String refreshBearerToken) {
-        if (!refreshBearerToken.startsWith("Bearer ")) {
-            throw new WrongRefreshTokenException("Bearer token not provided");
-        }
-
-        String refreshToken = refreshBearerToken.replace("Bearer ", "");
-
+    public LoginResponseDto refreshAccessToken(String refreshToken) {
         DecodedJWT decodedJWT = authService.verifyToken(refreshToken);
         User user = getUserByUsername(decodedJWT.getSubject());
 
@@ -140,44 +115,28 @@ public class UserService {
             user.setToken(newAccessToken);
             user.setTokenExpirationDate(authService.getTokenExpirationDate(newAccessToken));
             userRepository.save(user);
-            return newAccessToken;
+            return new LoginResponseDto(newAccessToken, refreshToken);
         }
     }
 
     @Transactional
-    public void activateAccount(UserDto userDto) {
-        User user = getUserByUsername(userDto.username());
+    public void activateAccount(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id=" + id + " doesn't exist"));
         if (!user.isActive()) {
             user.setActive(true);
             userRepository.save(user);
         }
     }
 
+    //TODO: nie aktualizować całego seta, dodać rolę
     @Transactional
-    public void deactivateAccount(UserDto userDto) {
-        User user = getUserByUsername(userDto.username());
-        if (user.isActive()) {
-            user.setActive(false);
-            userRepository.save(user);
+    public void updateRoles(UserDto userDto) {
+        if (userDto.username() == null || userDto.roles() == null) {
+            throw new EmptyDataException("Username and set of roles required");
         }
-    }
 
-    @Transactional
-    public void updateRoles(UserDto userDto, Set<Role> roles) {
         User user = getUserByUsername(userDto.username());
-        user.setRoles(roles);
+        user.setRoles(userDto.roles());
         userRepository.save(user);
-    }
-
-    public void removeUser(Long id) {
-        userRepository.deleteById(id);
-    }
-
-    private boolean isActive(UserDto userDto) {
-        if (userDto.isActive()) {
-            return true;
-        } else {
-            throw new InactiveUserException("Account inactive");
-        }
     }
 }

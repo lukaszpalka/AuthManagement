@@ -1,6 +1,5 @@
 package com.example.authmanagement.auth;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,14 +28,11 @@ public class AuthConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/signup").permitAll()
-                        .requestMatchers("/user/signin").permitAll()
-                        .requestMatchers("/user/refreshtoken").permitAll()
-                        .anyRequest()
-                        .authenticated())
-                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+                        .requestMatchers("/action/**").authenticated()
+                        .anyRequest().permitAll())
                 .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable);
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

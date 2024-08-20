@@ -18,6 +18,7 @@ CREATE TABLE user_roles (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
+
 INSERT INTO users(username, password, email, is_active)
 VALUES (
     'adm',
