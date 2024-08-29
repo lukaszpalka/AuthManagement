@@ -1,4 +1,4 @@
-package com.example.authmanagement;
+package com.example.authmanagement.config;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
