@@ -41,7 +41,7 @@ public class UserControllerTest extends PostgreSQLContainerConfig {
 
     @Test
     public void signUpTest() {
-        UserDto userDto = createUserDto("log", "pw", "mail@mal.com", Set.of(Role.USER, Role.ADMIN, Role.SUPER_ADMIN));
+        UserDto userDto = createUserDto("logg", "pww", "mail@mial.com", Set.of(Role.USER, Role.ADMIN, Role.SUPER_ADMIN));
 
         try {
             ResponseEntity<Void> response = restTemplate.postForEntity(
