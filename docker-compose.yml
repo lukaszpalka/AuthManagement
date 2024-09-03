@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15.0-alpine
+    image: postgres:13
     container_name: postgres
     environment:
       POSTGRES_DB: authdb
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql@15/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:
