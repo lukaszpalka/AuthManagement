@@ -4,9 +4,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.authmanagement.auth.AuthService;
 import com.example.authmanagement.auth.LoginResponseDto;
 import com.example.authmanagement.exceptions.*;
-import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,12 +55,13 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+//    @Transactional(noRollbackFor = {EmptyDataException.class, DataAlreadyExistsException.class})
     @Transactional
     public void signUp(UserDto userDto) {
         User user = new User();
-        if (userDto.username().isBlank()
-                || userDto.password().isBlank()
-                || userDto.email().isBlank()) {
+        if (userDto.username().isEmpty()
+                || userDto.password().isEmpty()
+                || userDto.email().isEmpty()) {
             throw new EmptyDataException("Data can't be empty");
         } else if (userRepository.existsByEmail(userDto.email())) {
             throw new DataAlreadyExistsException("Email already exists");

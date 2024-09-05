@@ -8,7 +8,7 @@ import com.example.authmanagement.exceptions.NoAccessException;
 import com.example.authmanagement.exceptions.UserNotFoundException;
 import com.example.authmanagement.user.User;
 import com.example.authmanagement.user.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
