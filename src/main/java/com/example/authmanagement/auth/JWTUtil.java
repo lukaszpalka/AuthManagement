@@ -28,7 +28,7 @@ public class JWTUtil {
                 .build();
     }
 
-    public String createToken(UserDto userDto) {
+    public String createAccessToken(UserDto userDto) {
         return JWT.create()
                 .withSubject(userDto.username())
                 .withClaim("id", userDto.id())
@@ -46,6 +46,14 @@ public class JWTUtil {
                 .sign(algorithm);
     }
 
+    public String createTokenWithCustomExpirationDate(UserDto userDto, Date date) {
+        return JWT.create()
+                .withSubject(userDto.username())
+                .withClaim("id", userDto.id())
+                .withIssuedAt(Date.from(Instant.now()))
+                .withExpiresAt(date)
+                .sign(algorithm);
+    }
 
     public DecodedJWT verifyToken(String token) {
         return verifier.verify(token);
@@ -53,6 +61,12 @@ public class JWTUtil {
 
     public LocalDateTime getExpirationDate(DecodedJWT decodedJWT) {
         return LocalDateTime.ofInstant(decodedJWT.getExpiresAt().toInstant(), ZoneId.systemDefault());
+    }
+
+    public LocalDateTime getExpirationDate(String token) {
+        if (token == null) {
+            return null;
+        } else return LocalDateTime.ofInstant(verifyToken(token).getExpiresAt().toInstant(), ZoneId.systemDefault());
     }
 
     private RSAPublicKey getPublicKey() {

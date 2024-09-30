@@ -32,10 +32,10 @@ public class User {
     @Column(name = "role")
     private Set<Role> roles = new HashSet<>();
 
-    String token;
+    String accessToken;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime tokenExpirationDate;
+    private LocalDateTime accessTokenExpirationDate;
 
     String refreshToken;
 
