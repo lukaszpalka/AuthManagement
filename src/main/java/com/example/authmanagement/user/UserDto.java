@@ -12,8 +12,8 @@ public record UserDto(
         String email,
         boolean isActive,
         Set<Role> roles,
-        String token,
-        LocalDateTime tokenExpirationDate,
+        String accessToken,
+        LocalDateTime accessTokenExpirationDate,
         String refreshToken,
         LocalDateTime refreshTokenExpirationDate) {
 

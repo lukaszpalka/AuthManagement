@@ -7,6 +7,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 public class AuthService {
@@ -31,20 +32,20 @@ public class AuthService {
         return bCryptPasswordEncoder.matches(userDto.password(), encodedUserDto.password());
     }
 
-    public String generateJwtToken(UserDto userDto) {
-        return jwtUtil.createToken(userDto);
+    public String generateAccessToken(UserDto userDto) {
+        return jwtUtil.createAccessToken(userDto);
     }
 
     public String generateRefreshToken(UserDto userDto) {
         return jwtUtil.createRefreshToken(userDto);
     }
 
-    public LocalDateTime getTokenExpirationDate(String token) {
-        return jwtUtil.getExpirationDate(verifyToken(token));
+    public String generateTokenWithCustomExpirationDate(UserDto userDto, Date date) {
+        return jwtUtil.createTokenWithCustomExpirationDate(userDto, date);
     }
 
-    public LocalDateTime getRefreshTokenExpirationDate(String refreshToken) {
-        return jwtUtil.getExpirationDate(verifyToken(refreshToken));
+    public LocalDateTime getTokenExpirationDate(String token) {
+        return jwtUtil.getExpirationDate(verifyToken(token));
     }
 
     public DecodedJWT verifyToken(String refreshToken) {

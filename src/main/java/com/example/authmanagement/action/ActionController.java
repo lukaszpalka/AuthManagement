@@ -66,7 +66,7 @@ public class ActionController {
     public ResponseEntity deleteUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @PathVariable("id") Long id) {
         SecurityContextHolder.getContext().getAuthentication().getAuthorities();
         actionService.deleteUser(token, id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 

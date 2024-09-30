@@ -8,7 +8,6 @@ import com.example.authmanagement.exceptions.NoAccessException;
 import com.example.authmanagement.exceptions.UserNotFoundException;
 import com.example.authmanagement.user.User;
 import com.example.authmanagement.user.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -72,7 +71,6 @@ public class ActionService {
         } else throw new NoAccessException("You don't have permission to do that");
     }
 
-    @Transactional
     public void deleteUser(String token, Long id) {
         if (!hasAccessTo(getIdFromToken(token), Operation.DELETE, Resource.USER)) {
             throw new NoAccessException("You don't have permission to do that");
@@ -84,7 +82,7 @@ public class ActionService {
     private Long getIdFromToken(String token) {
         if (token.startsWith("Bearer ")) {
             DecodedJWT decodedJWT = authService.verifyToken(token.substring(7));
-            return Long.valueOf(decodedJWT.getClaim("id").toString());
+            return decodedJWT.getClaim("id").asLong();
         } else throw new UserNotFoundException("Bearer token not provided");
     }
 

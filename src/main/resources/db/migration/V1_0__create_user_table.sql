@@ -4,8 +4,8 @@ CREATE TABLE users (
     password VARCHAR(500) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     is_active BOOLEAN NOT NULL,
-    token VARCHAR(512),
-    token_expiration_date TIMESTAMP,
+    access_token VARCHAR(512),
+    access_token_expiration_date TIMESTAMP,
     refresh_token VARCHAR(512),
     refresh_token_expiration_date TIMESTAMP
 );

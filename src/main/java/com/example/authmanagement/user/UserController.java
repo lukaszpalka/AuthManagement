@@ -1,6 +1,7 @@
 package com.example.authmanagement.user;
 
 import com.example.authmanagement.auth.LoginResponseDto;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +34,8 @@ public class UserController {
     }
 
     @PatchMapping("/refreshtoken")
-    public ResponseEntity<LoginResponseDto> refreshAccessToken(@RequestHeader(name = "Authorization") String refreshToken) {
-        return new ResponseEntity<>(userService.refreshAccessToken(refreshToken), HttpStatus.OK);
+    public ResponseEntity<LoginResponseDto> refreshAccessToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String bearerRefreshToken) {
+        return new ResponseEntity<>(userService.refreshAccessToken(bearerRefreshToken), HttpStatus.OK);
     }
 
     @PatchMapping("/user/activate/{id}")
