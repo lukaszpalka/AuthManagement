@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class NoAccessException extends RuntimeException {
     public NoAccessException(final String message) {
         super(message);
+        System.out.println(super.toString());
     }
 }

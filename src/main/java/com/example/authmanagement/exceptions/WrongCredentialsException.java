@@ -6,12 +6,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
 public class WrongCredentialsException extends BadCredentialsException {
-
     public WrongCredentialsException(final String message) {
         super(message);
-    }
-
-    public WrongCredentialsException(final String message, final Throwable cause) {
-        super(message, cause);
+        System.out.println(super.toString());
     }
 }

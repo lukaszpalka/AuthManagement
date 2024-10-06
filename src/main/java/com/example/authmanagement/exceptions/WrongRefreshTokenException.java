@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class WrongRefreshTokenException extends RuntimeException {
     public WrongRefreshTokenException(final String message) {
         super(message);
+        System.out.println(super.toString());
     }
 }

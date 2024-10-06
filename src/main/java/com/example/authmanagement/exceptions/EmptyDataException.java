@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class EmptyDataException extends RuntimeException {
     public EmptyDataException(final String message) {
         super(message);
+        System.out.println(super.toString());
     }
 }

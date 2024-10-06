@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class JwtTokenExpiredException extends RuntimeException {
     public JwtTokenExpiredException(final String message) {
         super(message);
+        System.out.println(super.toString());
     }
 }

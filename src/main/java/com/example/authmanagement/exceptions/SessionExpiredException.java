@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class SessionExpiredException extends RuntimeException{
     public SessionExpiredException(final String message) {
         super(message);
+        System.out.println(super.toString());
     }
 }

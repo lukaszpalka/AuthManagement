@@ -48,7 +48,7 @@ public class UserService {
         return convertUserToUserDto(getUserByUsername(username));
     }
 
-    public List<UserDto> getUserDtos() {
+    public List<UserDto> getUserDtoList() {
         return getUsers().stream()
                 .map(this::convertUserToUserDto)
                 .collect(Collectors.toList());
@@ -133,7 +133,6 @@ public class UserService {
         }
     }
 
-    //TODO: nie aktualizować całego seta, dodać rolę
     @Transactional
     public void updateRoles(UserDto userDto) {
         if (userDto.username() == null || userDto.roles() == null) {

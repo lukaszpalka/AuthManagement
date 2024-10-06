@@ -19,7 +19,7 @@ public class UserController {
 
     @GetMapping("/user/all")
     public ResponseEntity<List<UserDto>> getAllUsers() {
-        return new ResponseEntity<>(userService.getUserDtos(), HttpStatus.OK);
+        return new ResponseEntity<>(userService.getUserDtoList(), HttpStatus.OK);
     }
 
     @PostMapping("/signup")
