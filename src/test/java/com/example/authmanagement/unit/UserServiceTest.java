@@ -1,6 +1,8 @@
 package com.example.authmanagement.unit;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.authmanagement.auth.AuthService;
+import com.example.authmanagement.auth.LoginResponseDto;
 import com.example.authmanagement.enums.Role;
 import com.example.authmanagement.exceptions.DataAlreadyExistsException;
 import com.example.authmanagement.exceptions.EmptyDataException;
@@ -15,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -31,6 +32,9 @@ public class UserServiceTest {
 
     @Mock
     private AuthService authService;
+
+    @Mock
+    private DecodedJWT decodedJWT;
 
     @InjectMocks
     private UserService userService;
@@ -96,61 +100,73 @@ public class UserServiceTest {
 
     @Test
     public void SignInShouldAssignTokensToUserAndSaveToDatabase() {
-        User user = saveAndGetUser(userDto);
-//        UserDto userDtoWithIdAssigned = assignIdToUserDto(userDto, user.getId());
-        UserDto encodedUserDto = convertUserToUserDto(user);
         LocalDateTime expAccessToken = LocalDateTime.now().plusHours(1);
-        LocalDateTime expRefreshToken = LocalDateTime.now().plusDays(30);
-        when(authService.checkPassword(userDto, encodedUserDto)).thenReturn(true);
-        when(authService.generateAccessToken(encodedUserDto)).thenReturn("accessToken");
-        when(authService.generateRefreshToken(encodedUserDto)).thenReturn("refreshToken");
+        LocalDateTime expRefreshToken = LocalDateTime.now().plusHours(30);
+        UserDto userCredentialsDto = new UserDto(null, userDto.username(), userDto.password(), null, false, null, null, null, null, null);
+
+        when(userRepository.findByUsername(userDto.username())).thenReturn(getUser());
+        User registeredUser = userRepository.findByUsername(userDto.username());
+        UserDto registeredUserDto = convertUserToUserDto(registeredUser);
+
+        when(userService.getUserByUsername(userCredentialsDto.username())).thenReturn(registeredUser);
+        when(authService.checkPassword(userCredentialsDto, registeredUserDto)).thenReturn(true);
+        when(authService.generateAccessToken(registeredUserDto)).thenReturn("accessToken");
+        when(authService.generateRefreshToken(registeredUserDto)).thenReturn("refreshToken");
         when(authService.getTokenExpirationDate("accessToken")).thenReturn(expAccessToken);
         when(authService.getTokenExpirationDate("refreshToken")).thenReturn(expRefreshToken);
 
-        userService.signIn(encodedUserDto);
+        userService.signIn(userCredentialsDto);
 
-        user = userRepository.findByUsername(userDto.username());
+        User loggedUser = userRepository.findByUsername(userCredentialsDto.username());
 
-        assertNotNull(user);
-        assertEquals("accessToken", user.getAccessToken());
-        assertEquals("refreshToken", user.getRefreshToken());
-        assertEquals(expAccessToken, user.getAccessTokenExpirationDate());
-        assertEquals(expRefreshToken, user.getRefreshTokenExpirationDate());
+        assertNotNull(loggedUser);
+        assertEquals("accessToken", loggedUser.getAccessToken());
+        assertEquals("refreshToken", loggedUser.getRefreshToken());
+        assertEquals(expAccessToken, loggedUser.getAccessTokenExpirationDate());
+        assertEquals(expRefreshToken, loggedUser.getRefreshTokenExpirationDate());
     }
 
+    @Test
+    public void refreshAccessTokenShouldReturnNewToken() {
+        User user = getUser();
+        updateTokensParams(user);
+        String oldAccessToken = user.getAccessToken();
 
+        when(authService.verifyToken(user.getRefreshToken())).thenReturn(decodedJWT);
+        when(decodedJWT.getSubject()).thenReturn(user.getUsername());
+        when(userService.getUserByUsername(user.getUsername())).thenReturn(user);
+        when(authService.generateAccessToken(convertUserToUserDto(user))).thenReturn("newAccessToken");
+        when(authService.getTokenExpirationDate("newAccessToken")).thenReturn(LocalDateTime.now().plusHours(1));
+
+        LoginResponseDto loginResponseDto = userService.refreshAccessToken("Bearer " + user.getRefreshToken());
+
+        assertNotNull(loginResponseDto);
+        assertEquals("newAccessToken", loginResponseDto.accessToken());
+        assertNotEquals(oldAccessToken, loginResponseDto.accessToken());
+        assertEquals("refreshToken", loginResponseDto.refreshToken());
+        assertEquals(user.getRefreshToken(), loginResponseDto.refreshToken());
+    }
 
 //    -------------------------------------------------------------------
 
     private User getUser() {
-        Set<Role> roles = Set.of(Role.USER);
         return new User(1L,
-                "user",
-                "user",
-                "user@nomail.com",
+                userDto.username(),
+                userDto.password(),
+                userDto.email(),
                 true,
-                roles,
-                "accessToken",
-                LocalDateTime.now(),
-                "refreshToken",
-                LocalDateTime.now());
+                userDto.roles(),
+                null,
+                null,
+                null,
+                null);
     }
 
-    @Transactional
-    private User saveAndGetUser(UserDto userDto) {
-        User user = new User();
-        user.setUsername(userDto.username());
-        user.setPassword(authService.encryptPassword(userDto.password()));
-        user.setEmail(userDto.email());
-        user.setActive(true);
-        user.setRoles(userDto.roles());
-        userRepository.save(user);
-        return userRepository.findByUsername(user.getUsername());
-    }
-
-    private UserDto assignIdToUserDto(UserDto userDto, Long id) {
-        return new UserDto(id, userDto.username(), userDto.password(), userDto.email(), false, userDto.roles(), null, null, null, null);
-
+    private void updateTokensParams(User user) {
+        user.setAccessToken("accessToken");
+        user.setAccessTokenExpirationDate(LocalDateTime.now().plusHours(1));
+        user.setRefreshToken("refreshToken");
+        user.setAccessTokenExpirationDate(LocalDateTime.now().plusHours(30));
     }
 
     private UserDto getUserDto(String username, String password, String email, Set<Role> roles) {

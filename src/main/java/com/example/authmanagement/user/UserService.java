@@ -22,7 +22,7 @@ public class UserService {
         this.authService = authService;
     }
 
-    private User getUserByUsername(String username) {
+    public User getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 

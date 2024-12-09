@@ -60,14 +60,14 @@ public class UserControllerTest extends PostgreSQLContainerConfig {
     }
 
     @Test
-    public void signUpShouldReturnOkWhenDataComplete() {
+    public void signUpShouldReturnCreatedWhenDataComplete() {
         try {
             ResponseEntity<Void> responseUserDto = restTemplate.postForEntity(
                     createUrl("/signup"),
                     userDto,
                     Void.class);
 
-            assertEquals(HttpStatus.OK, responseUserDto.getStatusCode());
+            assertEquals(HttpStatus.CREATED, responseUserDto.getStatusCode());
         } catch (RestClientException e) {
             fail("Exception thrown: " + e.getMessage());
         }
