@@ -1,11 +1,11 @@
-# AuthFilter
+# AuthManagement
 
-<p>AuthFilter is a non-production Java application developed to showcase authentication and authorization mechanisms
+<p>AuthManagement is a non-production Java application developed to showcase authentication and authorization mechanisms
 in Java with Spring Boot. It focuses on generating and validation of JWT tokens, creating custom filters,
 integrating them into the Spring Security filter chain, and securing some endpoints by requiring a bearer token.</p>
 
 <p>The application features user registration, login, and a refresh token mechanism. By extracting user roles from tokens,
-AuthFilter ensures proper access control based on permissions.</p>
+AuthManagement ensures proper access control based on permissions.</p>
 <br>
 
 #### Stack
